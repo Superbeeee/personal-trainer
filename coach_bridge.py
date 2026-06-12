@@ -143,7 +143,7 @@ async def _run_claude(chat_id: int, text: str, *, resume: bool = True) -> str:
     _sessions[chat_id] = data.get("session_id", sid)
     if data.get("is_error"):
         raise RuntimeError((data.get("result") or "claude 回報錯誤")[:500])
-    return (data.get("result") or "").strip() or "（教练没有回覆,请再试一次）"
+    return (data.get("result") or "").strip() or "（教練沒有回覆,請再試一次）"
 
 
 # ── Telegram handlers ───────────────────────────────────
@@ -191,7 +191,7 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             reply = await _run_claude(chat_id, update.message.text)
     except Exception as e:
         log.exception("coach error")
-        reply = f"出错了:{e}"
+        reply = f"出錯了:{e}"
     finally:
         stop.set()
         await typing
