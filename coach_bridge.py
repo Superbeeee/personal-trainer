@@ -99,10 +99,10 @@ async def _run_claude(chat_id: int, text: str, *, resume: bool = True) -> str:
     _last_seen[chat_id] = now
 
     sid = _sessions.get(chat_id) if resume else None
+    # prompt 改走 stdin,避免以 '-' 開頭的訊息被 CLI 當成未知選項解析
     cmd = [
         CLAUDE_BIN,
         "-p",
-        text,
         "--output-format",
         "json",
         "--permission-mode",
@@ -121,11 +121,14 @@ async def _run_claude(chat_id: int, text: str, *, resume: bool = True) -> str:
     proc = await asyncio.create_subprocess_exec(
         *cmd,
         cwd=str(COACH_DIR),
+        stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
     try:
-        out, err = await asyncio.wait_for(proc.communicate(), timeout=TIMEOUT)
+        out, err = await asyncio.wait_for(
+            proc.communicate(input=text.encode()), timeout=TIMEOUT
+        )
     except asyncio.TimeoutError:
         proc.kill()
         raise RuntimeError(f"claude 逾時({TIMEOUT}s),可調大 CLAUDE_TIMEOUT")
